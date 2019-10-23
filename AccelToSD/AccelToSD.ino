@@ -5,7 +5,11 @@
 #include <Adafruit_BNO055.h>
 #include <utility/imumaths.h>
 
+// pin that enables SD card (4 for ethernet shield)
 const int chipSelect = 4;
+
+// name of file to save data in
+#define FILE_NAME "accel.csv"
 
 /* Set the delay between fresh samples */
 #define BNO055_SAMPLERATE_DELAY_MS (100)
@@ -14,6 +18,7 @@ const int chipSelect = 4;
 //                                   id, address
 Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28);
 
+// vars to save calibration data
 uint8_t systemCal;
 uint8_t gyroCal;
 uint8_t accelCal;
@@ -23,29 +28,31 @@ void writeCSV(int x, int y, int z, int calS, int calA, int calG, int calM){
 
   // open the file. note that only one file can be open at a time,
   // so you have to close this one before opening another.
-  File dataFile = SD.open("accel.csv", FILE_WRITE);
+  File dataFile = SD.open(FILE_NAME, FILE_WRITE);
 
   // if the file is available, write to it:
   if (dataFile) {
+    dataFile.print(millis());
+    dataFile.print(", ");
     dataFile.print(x);
-    dataFile.print(', ');
+    dataFile.print(", ");
     dataFile.print(y);
-    dataFile.print(', ');
+    dataFile.print(", ");
     dataFile.print(z);
-    dataFile.print(', ');
+    dataFile.print(", ");
     dataFile.print(calS);
-    dataFile.print(', ');
+    dataFile.print(", ");
     dataFile.print(calA);
-    dataFile.print(', ');
+    dataFile.print(", ");
     dataFile.print(calG);
-    dataFile.print(', ');
+    dataFile.print(", ");
     dataFile.print(calM);
-    dataFile.print(', ');
+    dataFile.println("");
     dataFile.close();
   }
   // if the file isn't open, pop up an error:
   else {
-    Serial.println("error opening datalog.txt");
+    Serial.println("error opening data file");
   }
 }
 
@@ -53,29 +60,22 @@ void writeCSVHead(){
 
   // open the file. note that only one file can be open at a time,
   // so you have to close this one before opening another.
-  File dataFile = SD.open("accel.csv", FILE_WRITE);
+  File dataFile = SD.open(FILE_NAME, FILE_WRITE);
 
   // if the file is available, write to it:
   if (dataFile) {
-    dataFile.print('xVal');
-    dataFile.print(', ');
-    dataFile.print('yVal');
-    dataFile.print(', ');
-    dataFile.print('zVal');
-    dataFile.print(', ');
-    dataFile.print('CalS');
-    dataFile.print(', ');
-    dataFile.print('CalA');
-    dataFile.print(', ');
-    dataFile.print('CalG');
-    dataFile.print(', ');
-    dataFile.print('CalM');
-    dataFile.print('; \n');
+    dataFile.println("Time, xVal, yVal, zVal, CalS, CalA, CalG, CalM");
     dataFile.close();
   }
   // if the file isn't open, pop up an error:
   else {
-    Serial.println("error opening datalog.txt");
+    Serial.println("error opening data file");
+  }
+}
+
+void removeCSV(){
+  if(SD.exists(FILE_NAME)){
+    SD.remove(FILE_NAME);
   }
 }
 
@@ -140,7 +140,7 @@ void displayCalStatus(void){
 
 void setup() {
   // Open serial communications and wait for port to open:
-  Serial.begin(9600);
+  Serial.begin(115200);
   while (!Serial) {
     ; // wait for serial port to connect. Needed for native USB port only
   }
@@ -152,9 +152,10 @@ void setup() {
     // don't do anything more:
     while (1);
   }
-  else{
-      writeCSVHead();
-  }
+
+  removeCSV();
+  writeCSVHead();
+  
   Serial.println("card initialized.");
 
   //================================================================
