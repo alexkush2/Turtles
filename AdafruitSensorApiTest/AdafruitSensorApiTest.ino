@@ -24,7 +24,7 @@
 
    History
    =======
-   2015/MAR/03  - First release (KTOWN)
+   2015/MAR/03  - First release
    2015/AUG/27  - Added calibration and system status helpers
 */
 
