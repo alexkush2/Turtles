@@ -17,6 +17,39 @@ double DEG_2_RAD = 0.01745329251; //trig functions require radians, BNO055 outpu
 //                                   id, address
 Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28);
 
+/**************************************************************************/
+/*
+    Display sensor calibration status
+*/
+/**************************************************************************/
+void displayCalStatus(void)
+{
+  /* Get the four calibration values (0..3) */
+  /* Any sensor data reporting 0 should be ignored, */
+  /* 3 means 'fully calibrated" */
+  uint8_t system, gyro, accel, mag;
+  system = gyro = accel = mag = 0;
+  bno.getCalibration(&system, &gyro, &accel, &mag);
+
+  /* The data should be ignored until the system calibration is > 0 */
+  Serial.print("\t");
+  if (!system)
+  {
+    Serial.print("! ");
+  }
+
+  /* Display the individual values */
+  Serial.print("Sys:");
+  Serial.print(system, DEC);
+  Serial.print(" G:");
+  Serial.print(gyro, DEC);
+  Serial.print(" A:");
+  Serial.print(accel, DEC);
+  Serial.print(" M:");
+  Serial.print(mag, DEC);
+}
+
+
 void setup(void)
 {
   Serial.begin(115200);
@@ -56,6 +89,11 @@ void loop(void)
     Serial.print("Speed: ");
     Serial.println(headingVel);
     Serial.println("-------");
+
+
+  /* Optional: Display calibration status */
+  displayCalStatus();
+
 
     printCount = 0;
   }
