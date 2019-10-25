@@ -23,22 +23,39 @@ uint8_t systemCal;
 uint8_t gyroCal;
 uint8_t accelCal;
 uint8_t magCal;
+ 
 
-void writeCSV(int x, int y, int z, int calS, int calA, int calG, int calM){
+void writeCSV(Adafruit_BNO055 &bno, int calS, int calA, int calG, int calM){
 
   // open the file. note that only one file can be open at a time,
   // so you have to close this one before opening another.
   File dataFile = SD.open(FILE_NAME, FILE_WRITE);
 
+  imu::Vector<3> euler = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
+  imu::Vector<3> gyro = bno.getVector(Adafruit_BNO055::VECTOR_GYROSCOPE);
+  imu::Vector<3> accel = bno.getVector(Adafruit_BNO055::VECTOR_ACCELEROMETER);
+
   // if the file is available, write to it:
   if (dataFile) {
     dataFile.print(millis());
     dataFile.print(", ");
-    dataFile.print(x);
+    dataFile.print(euler.x);
     dataFile.print(", ");
-    dataFile.print(y);
+    dataFile.print(euler.y);
     dataFile.print(", ");
-    dataFile.print(z);
+    dataFile.print(euler.z);
+    dataFile.print(", ");
+    dataFile.print(gyro.x);
+    dataFile.print(", ");
+    dataFile.print(gyro.y);
+    dataFile.print(", ");
+    dataFile.print(gyro.z);
+    dataFile.print(", ");
+    dataFile.print(accel.x);
+    dataFile.print(", ");
+    dataFile.print(accel.y);
+    dataFile.print(", ");
+    dataFile.print(accel.z);
     dataFile.print(", ");
     dataFile.print(calS);
     dataFile.print(", ");
@@ -64,7 +81,7 @@ void writeCSVHead(){
 
   // if the file is available, write to it:
   if (dataFile) {
-    dataFile.println("Time, xVal, yVal, zVal, CalS, CalA, CalG, CalM");
+    dataFile.println("Time, xOrient, yOrient, zOrient, xGyro, yGyro, zGyro, xAccel, yAccel, zAccel, CalS, CalA, CalG, CalM");
     dataFile.close();
   }
   // if the file isn't open, pop up an error:
@@ -208,7 +225,7 @@ void loop() {
   /* New line for the next sample */
   Serial.println("");
   
-  writeCSV(event.orientation.x, event.orientation.z, event.orientation.z, systemCal, gyroCal, accelCal, magCal);
+  writeCSV(event, systemCal, gyroCal, accelCal, magCal);
   
   /* Wait the specified delay before requesting nex data */
   delay(BNO055_SAMPLERATE_DELAY_MS);
