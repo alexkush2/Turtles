@@ -4,8 +4,6 @@
 #include <Adafruit_BNO055.h>
 #include <utility/imumaths.h>
 
-#include "DepthSensor.h"
-
 //Dont Forget -----
 // pin that enables SD card (4 for ethernet shield)
 //const int chipSelect = 4;
@@ -14,7 +12,7 @@
 #define FILE_NAME "accel.csv"
 
 
-void writeCSV(){
+void writeCSV(Adafruit_BNO055 bno, MS5837 depthSensor){
 
   // open the file. note that only one file can be open at a time,
   // so you have to close this one before opening another.
@@ -57,12 +55,25 @@ void writeCSV(){
     dataFile.print(accelCal);
     dataFile.print(", ");
     dataFile.print(magCal);
+    dataFile.print(", ");
+    // if depthSensor add to file
+    #ifdef depthSensor
+      dataFile.print(depthSensor.depth());
+    #else
+      dataFile.print(0);
+    #endif
     dataFile.println("");
     dataFile.close();
   }
   // if the file isn't open, pop up an error:
   else {
     Serial.println("error opening data file");
+  }
+}
+
+void removeCSV(){
+  if(SD.exists(FILE_NAME)){
+    SD.remove(FILE_NAME);
   }
 }
 
@@ -84,8 +95,3 @@ void CSVinit(){
   }
 }
 
-void removeCSV(){
-  if(SD.exists(FILE_NAME)){
-    SD.remove(FILE_NAME);
-  }
-}
