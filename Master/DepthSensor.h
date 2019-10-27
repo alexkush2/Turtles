@@ -1,6 +1,7 @@
 #include <Wire.h>
 #include "MS5837.h"
 
+
 /* Dont forget to add
 
 MS5837 depthSensor;
@@ -11,7 +12,7 @@ in global declarations to initialize the sensor object
 
 
 // connects to sensor and sets up basic parameters
-void initDepthSensor(){
+void initDepthSensor(MS5837 depthSensor){
     Wire.begin();
 
     // Initialize pressure sensor
