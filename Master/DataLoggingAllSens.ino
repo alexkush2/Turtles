@@ -4,6 +4,7 @@
 
 // pin that enables SD card (4 for ethernet shield)
 const int chipSelect = 4;
+bool SDPresent = false;
 
 // Check I2C device address and correct line below (by default address is 0x29 or 0x28)
 //                                   id, address
@@ -45,15 +46,19 @@ void setup() {
   // see if the card is present and can be initialized:
   Serial.print("Initializing SD card...");
   if (!SD.begin(chipSelect)) {
-    Serial.println("Card failed, or not present");
+    Serial.println("Card failed, or not present\nPress button to skip");
     // don't do anything more:
     while(1){ // error flash
       digitalWrite(MCalPin, LOW);
       delay(100);
       digitalWrite(MCalPin, HIGH);
       delay(100);
+      if(!digitalRead(buttonPin)){
+        SDPresent == false;
+        break;
+      } 
     }
-  }
+  } else SDPresent == true;
   
   CSVinit();
   Serial.println("card initialized.");

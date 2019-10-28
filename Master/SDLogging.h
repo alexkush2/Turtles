@@ -6,6 +6,7 @@
 #include "MS5837.h"
 
 extern bool depthPresent;
+extern bool SDPresent;
 //Dont Forget -----
 // pin that enables SD card (4 for ethernet shield)
 //const int chipSelect = 4;
@@ -14,6 +15,8 @@ extern bool depthPresent;
 #define FILE_NAME "accel.csv"
 
 void writeCSV(Adafruit_BNO055 bno, MS5837 depthSensor){
+  // if no sd card break
+  if(!SDPresent) return;
 
   // open the file. note that only one file can be open at a time,
   // so you have to close this one before opening another.
@@ -75,13 +78,17 @@ void writeCSV(Adafruit_BNO055 bno, MS5837 depthSensor){
 
 // Delete CSV file
 void removeCSV(){
-  if(SD.exists(FILE_NAME)){
+  if(SDPresent && SD.exists(FILE_NAME)){
     SD.remove(FILE_NAME);
   }
 }
 
-// initilize CSV file on SD card
+// initialize CSV file on SD card
 void CSVinit(){
+  // check sd exits
+  if(!SDPresent) return;
+
+  // delete old file
   removeCSV();
   
   // open the file. note that only one file can be open at a time,
