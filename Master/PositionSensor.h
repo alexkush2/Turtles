@@ -4,13 +4,8 @@
 #include <EEPROM.h>
 
 
-// dont forget
-
 /* Set the delay between fresh samples */
 #define BNO055_SAMPLERATE_DELAY_MS (100)
-
-/* Set the delay between fresh samples for calibration */
-#define BNO055_CALIBRATE_DELAY_MS (500)
 
 // // Check I2C device address and correct line below (by default address is 0x29 or 0x28)
 // //                                   id, address
@@ -19,22 +14,25 @@
 extern byte GCalPin;
 extern byte ACalPin;
 extern byte MCalPin;
+extern byte buttonPin;
 
+// displays sensor specs and shit to serial monitor
 void displaySensorDetails(Adafruit_BNO055 bno){
-  sensor_t depthSensor;
-  bno.getSensor(&depthSensor);
+  sensor_t sensor;
+  bno.getSensor(&sensor);
   Serial.println("------------------------------------");
-  Serial.print  ("Sensor:       "); Serial.println(depthSensor.name);
-  Serial.print  ("Driver Ver:   "); Serial.println(depthSensor.version);
-  Serial.print  ("Unique ID:    "); Serial.println(depthSensor.sensor_id);
-  Serial.print  ("Max Value:    "); Serial.print(depthSensor.max_value); Serial.println(" xxx");
-  Serial.print  ("Min Value:    "); Serial.print(depthSensor.min_value); Serial.println(" xxx");
-  Serial.print  ("Resolution:   "); Serial.print(depthSensor.resolution); Serial.println(" xxx");
+  Serial.print  ("Sensor:       "); Serial.println(sensor.name);
+  Serial.print  ("Driver Ver:   "); Serial.println(sensor.version);
+  Serial.print  ("Unique ID:    "); Serial.println(sensor.sensor_id);
+  Serial.print  ("Max Value:    "); Serial.print(sensor.max_value); Serial.println(" xxx");
+  Serial.print  ("Min Value:    "); Serial.print(sensor.min_value); Serial.println(" xxx");
+  Serial.print  ("Resolution:   "); Serial.print(sensor.resolution); Serial.println(" xxx");
   Serial.println("------------------------------------");
   Serial.println("");
   delay(500);
 }
 
+// displays sensor status and tests and shit to serial monitor
 void displaySensorStatus(Adafruit_BNO055 bno){
   /* Get the system status values (mostly for debugging purposes) */
   uint8_t system_status, self_test_results, system_error;
@@ -53,9 +51,10 @@ void displaySensorStatus(Adafruit_BNO055 bno){
   delay(500);
 }
 
+// prints the calibration status to the serial monitor and updates LEDS
 void displayCalStatus(Adafruit_BNO055 bno){
   /* Get the four calibration values (0..3) */
-  /* Any depthSensor data reporting 0 should be ignored, */
+  /* Any sensor data reporting 0 should be ignored, */
   /* 3 means 'fully calibrated" */
   uint8_t system, gyro, accel, mag;
   system = gyro = accel = mag = 0;
@@ -65,14 +64,16 @@ void displayCalStatus(Adafruit_BNO055 bno){
   Serial.print("\t");
   if (!system){
     Serial.print("! ");
-  } else if(gyro==3){
+  } if(gyro==3){
     // turn on Gyro Cal LED
     digitalWrite(GCalPin, HIGH);
-  } //else if(mag==3){
-  //   digitalWrite(MCalPin, HIGH);
-  // } else if (accel==3){
-  //   digitalWrite(ACalPin, HIGH);
-  // }
+  } else digitalWrite(GCalPin, LOW);
+  if(mag==3){
+    digitalWrite(MCalPin, HIGH);
+  } else digitalWrite(MCalPin, LOW);
+  if (accel==3){
+    digitalWrite(ACalPin, HIGH);
+  } else digitalWrite(ACalPin, LOW);
   
   /* Display the individual values */
   Serial.print("Sys:");
@@ -85,6 +86,7 @@ void displayCalStatus(Adafruit_BNO055 bno){
   Serial.print(mag, DEC);
 }
 
+// prints sensor cailbration ofsets to the serial monitor
 void displaySensorOffsets(const adafruit_bno055_offsets_t &calibData){
     Serial.print("Accelerometer: ");
     Serial.print(calibData.accel_offset_x); Serial.print(" ");
@@ -113,24 +115,23 @@ void readEEPROMcal(Adafruit_BNO055 bno, bool force = false){
   int eeAddress = 0;
   long bnoID;
   bool foundCalib = false;
-
+  // read from eeprom to look for id
   EEPROM.get(eeAddress, bnoID);
 
   adafruit_bno055_offsets_t calibrationData;
-  sensor_t depthSensor;
-
+  sensor_t sensor;
   
     /*
-    *  Look for the depthSensor's unique ID at the beginning oF EEPROM.
+    *  Look for the sensor's unique ID at the beginning oF EEPROM.
     *  This isn't foolproof, but it's better than nothing.
     */
-    bno.getSensor(&depthSensor);
-    if (bnoID != depthSensor.sensor_id){
-        Serial.println("\nNo Calibration Data for this depthSensor exists in EEPROM");
+    bno.getSensor(&sensor); // calibration data was not found
+    if (bnoID != sensor.sensor_id){
+        Serial.println("\nNo Calibration Data for this sensor exists in EEPROM");
         delay(500);
     }
-    else{
-        Serial.println("\nFound Calibration for this depthSensor in EEPROM.");
+    else{ // calibration data was found in eeprom
+        Serial.println("\nFound Calibration for this sensor in EEPROM.");
         eeAddress += sizeof(long);
         EEPROM.get(eeAddress, calibrationData);
 
@@ -142,6 +143,7 @@ void readEEPROMcal(Adafruit_BNO055 bno, bool force = false){
         Serial.println("\n\nCalibration data loaded into BNO055");
         foundCalib = true;
 
+        // if force flag was set in arguments force the system to update cal
         if (force == true){
           foundCalib == false;
         }
@@ -150,16 +152,21 @@ void readEEPROMcal(Adafruit_BNO055 bno, bool force = false){
     bno.getEvent(&event);
     /* always recal the mag as It goes out of calibration very often */
     if (foundCalib && force == false){
-        Serial.println("Move depthSensor slightly to calibrate magnetometers");
-        while (!bno.isFullyCalibrated())
-        {
-            bno.getEvent(&event);
-            delay(BNO055_CALIBRATE_DELAY_MS);
+        Serial.println("Move sensor slightly to calibrate magnetometers");
+        bool status = 0;
+        while (!bno.isFullyCalibrated()) {
+          // flash LEDS while magnetometer needs cal
+          digitalWrite(GCalPin, status); digitalWrite(ACalPin, status); digitalWrite(MCalPin, status);
+          status = !status;
+          Serial.print(status);
+          bno.getEvent(&event);
+          delay(BNO055_SAMPLERATE_DELAY_MS);
         }
     }
     else{
         Serial.println("Please Calibrate Sensor: ");
-        while (!bno.isFullyCalibrated())
+        //while (!bno.isFullyCalibrated())
+        while(digitalRead(buttonPin)==HIGH)
         {
             bno.getEvent(&event);
 
@@ -191,8 +198,8 @@ void readEEPROMcal(Adafruit_BNO055 bno, bool force = false){
     Serial.println("\n\nStoring calibration data to EEPROM...");
 
     eeAddress = 0;
-    bno.getSensor(&depthSensor);
-    bnoID = depthSensor.sensor_id;
+    bno.getSensor(&sensor);
+    bnoID = sensor.sensor_id;
 
     EEPROM.put(eeAddress, bnoID);
 
@@ -207,4 +214,25 @@ void readEEPROMcal(Adafruit_BNO055 bno, bool force = false){
 void wipeEEPROM(){
   EEPROM.put(0, long(0));
   Serial.println("EEPROM Cal Erased");
+}
+
+void updateCalStatusLEDS(Adafruit_BNO055 bno){
+  /* Get the four calibration values (0..3) */
+  /* Any sensor data reporting 0 should be ignored, */
+  /* 3 means 'fully calibrated" */
+  uint8_t system, gyro, accel, mag;
+  system = gyro = accel = mag = 0;
+  bno.getCalibration(&system, &gyro, &accel, &mag);
+
+  /* The data should be ignored until the system calibration is > 0 */
+  if(gyro==3){
+    // turn on Gyro Cal LED
+    digitalWrite(GCalPin, HIGH);
+  } else digitalWrite(GCalPin, LOW);
+  if(mag==3){
+    digitalWrite(MCalPin, HIGH);
+  } else digitalWrite(MCalPin, LOW);
+  if (accel==3){
+    digitalWrite(ACalPin, HIGH);
+  } else digitalWrite(ACalPin, LOW);
 }

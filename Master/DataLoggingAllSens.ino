@@ -11,22 +11,26 @@ Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28);
 
 // Initialise depth depthSensor
 MS5837 depthSensor;
+bool depthPresent;
 
-byte GCalPin = 30;
-byte ACalPin = 30;
-byte MCalPin = 30;
+byte GCalPin = 43;
+byte ACalPin = 45;
+byte MCalPin = 47;
+byte buttonPin = 41;
 
 void setup() {
 
   //================================================================
   // pin setup
+  pinMode(buttonPin, INPUT_PULLUP);
+
   pinMode(GCalPin, OUTPUT);
   pinMode(ACalPin, OUTPUT);
   pinMode(MCalPin, OUTPUT);
   digitalWrite(GCalPin, HIGH);
   digitalWrite(ACalPin, HIGH);
   digitalWrite(MCalPin, HIGH);
-  delay(1000);
+  delay(500);
   digitalWrite(GCalPin, LOW);
   digitalWrite(ACalPin, LOW);
   digitalWrite(MCalPin, LOW);
@@ -42,7 +46,12 @@ void setup() {
   if (!SD.begin(chipSelect)) {
     Serial.println("Card failed, or not present");
     // don't do anything more:
-    while (1);
+    while(1){ // error flash
+      digitalWrite(MCalPin, LOW);
+      delay(100);
+      digitalWrite(MCalPin, HIGH);
+      delay(100);
+    }
   }
   
   Serial.println("card initialized.");
@@ -58,18 +67,23 @@ void setup() {
   if(!bno.begin()) {
     /* There was a problem detecting the BNO055 ... check your connections */
     Serial.print("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
-    while(1);
+    while(1){ // error flash
+      digitalWrite(ACalPin, LOW);
+      delay(100);
+      digitalWrite(ACalPin, HIGH);
+      delay(100);
+    }
   }
 
   delay(1000);
 
   // Initialise depth depthSensor
-  initDepthSensor(depthSensor);
+  depthPresent = initDepthSensor(depthSensor);
 
   //================================================================
   // read calibration data
-  readEEPROMcal(bno, true);
-  wipeEEPROM();
+  readEEPROMcal(bno);
+  //wipeEEPROM();
 
 
   /* Display some basic information on this orientation sensor */
