@@ -63,7 +63,7 @@ void writeCSV(Adafruit_BNO055 bno, MS5837 depthSensor){
     dataFile.print(", ");
     dataFile.print(magCal);
     dataFile.print(", ");
-    dataFile.print(depth);
+    dataFile.print(depth);  // depth
     dataFile.println("");
     dataFile.close();
   }

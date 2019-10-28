@@ -56,7 +56,7 @@ bool initDepthSensor(MS5837 depthSensor){
         Serial.println("Are SDA/SCL connected correctly?");
         Serial.println("Blue Robotics Bar30: White=SDA, Green=SCL");
         Serial.println("\n\n\n");
-        // flash GCalPin 
+        // flash GCalPin LED
         errDepthDelay1sec();
         if(i == 5) return false;
         if(digitalRead(buttonPin)==LOW) return false;

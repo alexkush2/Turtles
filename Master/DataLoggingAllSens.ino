@@ -13,6 +13,7 @@ Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28);
 MS5837 depthSensor;
 bool depthPresent;
 
+// pin declarations
 byte GCalPin = 43;
 byte ACalPin = 45;
 byte MCalPin = 47;
@@ -54,9 +55,8 @@ void setup() {
     }
   }
   
-  Serial.println("card initialized.");
-
   CSVinit();
+  Serial.println("card initialized.");
 
   //================================================================
   // Initialise Sensors
