@@ -3,9 +3,9 @@
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BNO055.h>
 #include <utility/imumaths.h>
+#include "MS5837.h"
 
-#include "DepthSensor.h"
-
+extern bool depthPresent;
 //Dont Forget -----
 // pin that enables SD card (4 for ethernet shield)
 //const int chipSelect = 4;
@@ -13,8 +13,7 @@
 // name of file to save data in
 #define FILE_NAME "accel.csv"
 
-
-void writeCSV(){
+void writeCSV(Adafruit_BNO055 bno, MS5837 depthSensor){
 
   // open the file. note that only one file can be open at a time,
   // so you have to close this one before opening another.
@@ -27,6 +26,12 @@ void writeCSV(){
 
   uint8_t systemCal, gyroCal, accelCal, magCal = 0;
   bno.getCalibration(&systemCal, &gyroCal, &accelCal, &magCal);
+
+  // if depth sensor isnt present depth = 0
+  int depth = 0;
+  if(depthPresent){
+    depth = depthSensor.depth();
+  } 
 
   // if the file is available, write to it:
   if (dataFile) {
@@ -57,6 +62,8 @@ void writeCSV(){
     dataFile.print(accelCal);
     dataFile.print(", ");
     dataFile.print(magCal);
+    dataFile.print(", ");
+    dataFile.print(depth);  // depth
     dataFile.println("");
     dataFile.close();
   }
@@ -66,6 +73,14 @@ void writeCSV(){
   }
 }
 
+// Delete CSV file
+void removeCSV(){
+  if(SD.exists(FILE_NAME)){
+    SD.remove(FILE_NAME);
+  }
+}
+
+// initilize CSV file on SD card
 void CSVinit(){
   removeCSV();
   
@@ -84,8 +99,3 @@ void CSVinit(){
   }
 }
 
-void removeCSV(){
-  if(SD.exists(FILE_NAME)){
-    SD.remove(FILE_NAME);
-  }
-}

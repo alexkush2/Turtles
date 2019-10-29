@@ -1,23 +1,9 @@
-#include <SPI.h>
-#include <SD.h>
-#include <Wire.h>
-#include <Adafruit_Sensor.h>
-#include <Adafruit_BNO055.h>
-#include "MS5837.h"
-
+#include "SDLogging.h"
 #include "DepthSensor.h"
-#include "DataLogging.h"
 #include "PositionSensor.h"
 
 // pin that enables SD card (4 for ethernet shield)
 const int chipSelect = 4;
-
-
-/* Set the delay between fresh samples */
-#define BNO055_SAMPLERATE_DELAY_MS (100)
-
-/* Set the delay between fresh samples for calibration */
-#define BNO055_CALIBRATE_DELAY_MS (500)
 
 // Check I2C device address and correct line below (by default address is 0x29 or 0x28)
 //                                   id, address
@@ -25,9 +11,34 @@ Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28);
 
 // Initialise depth depthSensor
 MS5837 depthSensor;
+bool depthPresent;
 
+// pin declarations
+byte GCalPin = 43;
+byte ACalPin = 45;
+byte MCalPin = 47;
+byte buttonPin = 41;
 
 void setup() {
+
+  //================================================================
+  // pin setup
+  pinMode(buttonPin, INPUT_PULLUP);
+
+  pinMode(GCalPin, OUTPUT);
+  pinMode(ACalPin, OUTPUT);
+  pinMode(MCalPin, OUTPUT);
+  digitalWrite(GCalPin, HIGH);
+  digitalWrite(ACalPin, HIGH);
+  digitalWrite(MCalPin, HIGH);
+  delay(500);
+  digitalWrite(GCalPin, LOW);
+  digitalWrite(ACalPin, LOW);
+  digitalWrite(MCalPin, LOW);
+
+  //================================================================
+  // Initialise Serial and SD
+
   // Open serial communications and wait for port to open:
   Serial.begin(115200);
 
@@ -36,41 +47,50 @@ void setup() {
   if (!SD.begin(chipSelect)) {
     Serial.println("Card failed, or not present");
     // don't do anything more:
-    while (1);
+    while(1){ // error flash
+      digitalWrite(MCalPin, LOW);
+      delay(100);
+      digitalWrite(MCalPin, HIGH);
+      delay(100);
+    }
   }
   
-  Serial.println("card initialized.");
-
   CSVinit();
+  Serial.println("card initialized.");
 
   //================================================================
   // Initialise Sensors
 
-    Serial.println("Orientation Sensor Test"); Serial.println("");
+  Serial.println("Orientation Sensor Test"); Serial.println("");
 
   /* Initialise the orientation sensor */
   if(!bno.begin()) {
     /* There was a problem detecting the BNO055 ... check your connections */
     Serial.print("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
-    while(1);
+    while(1){ // error flash
+      digitalWrite(ACalPin, LOW);
+      delay(100);
+      digitalWrite(ACalPin, HIGH);
+      delay(100);
+    }
   }
 
   delay(1000);
 
   // Initialise depth depthSensor
-  initDepthSensor();
+  depthPresent = initDepthSensor(depthSensor);
 
   //================================================================
   // read calibration data
-  readEEPROMcal(true);
-  wipeEEPROM();
+  readEEPROMcal(bno);
+  //wipeEEPROM();
 
 
-  /* Display some basic information on this depthSensor */
-  displaySensorDetails();
+  /* Display some basic information on this orientation sensor */
+  displaySensorDetails(bno);
 
   /* Optional: Display current status */
-  displaySensorStatus();
+  displaySensorStatus(bno);
 
   bno.setExtCrystalUse(true);
 
@@ -93,7 +113,7 @@ void loop() {
   Serial.print(depthSensor.depth());
 
   /* Optional: Display calibration status */
-  displayCalStatus();
+  displayCalStatus(bno);
 
   /* Optional: Display depthSensor status (debug only) */
   //displaySensorStatus();
@@ -101,7 +121,7 @@ void loop() {
   /* New line for the next sample */
   Serial.println("");
   
-  writeCSV();
+  writeCSV(bno, depthSensor);
   
   /* Wait the specified delay before requesting nex data */
   delay(BNO055_SAMPLERATE_DELAY_MS);
