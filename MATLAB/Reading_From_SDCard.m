@@ -1,26 +1,35 @@
 close all
+clear all
 clc
 
-%data = csvread('exampleACCEL.CSV', 1, 0); % csvread(Filename,row offset,column offset)
-data = csv2struct('exampleACCEL.CSV');
-for i=1:length(data)
-    data(i).Time= data(i).Time - data(i).Time(1);
-end
-
+data = csv2struct('ACCEL_10292019car.CSV');
 varlen = size(data.xAccel);
 headingVelocity = zeros(varlen(1),1);
-
-BNO055_SAMPLERATE_DELAY_MS = 136; % how often to read data from the board
-ACCEL_VEL_TRANSITION = BNO055_SAMPLERATE_DELAY_MS/1000; % gives us value in per second
-% velocity = accel*dt (dt in seconds)
-
-for i=1:length(data)
-   headingVelocity(:,i)=ACCEL_VEL_TRANSITION.*data(i).xAccel./cos((data(i).xOrient).*(pi/180));
+Time1 = data.Time(1);
+xAverage = mean(data.xAccel);
+for i=1:length(data.Time)
+    data.Time(i) = data.Time(i) - Time1;
+    data.xAccel(i) = data.xAccel(i) - xAverage;
+    if(i==1)
+        BNO055_SAMPLERATE_DELAY_MS = data.Time(i);
+    else
+        BNO055_SAMPLERATE_DELAY_MS = data.Time(i) - data.Time(i-1); % how often to read data from the board
+    end    
+    ACCEL_VEL_TRANSITION(i) = BNO055_SAMPLERATE_DELAY_MS/1000; % gives us value in per milisecond
+%     headingVelocity(i,1)=ACCEL_VEL_TRANSITION.*data.xAccel(i)./cos((data.xOrient(i)).*(pi/180));
+    if(i==1)
+        headingVelocity(i,1)=ACCEL_VEL_TRANSITION(i).*data.xAccel(i) + headingVelocity(i,1);
+    else
+        headingVelocity(i,1)=ACCEL_VEL_TRANSITION(i).*data.xAccel(i) + headingVelocity(i-1,1);
+    end
 end
+
+subplot(2,1,1)
 plot(data.Time, headingVelocity);
-% subplot(3,1,1)
-% plot(data.Time, data.xAccel)
-% ylabel('m/s^2')
+ylabel('velocity (m/s)')
+subplot(2,1,2)
+plot(data.Time, data.xAccel)
+ylabel('acceleration (m/s^2)')
 % subplot(3,1,2)
 % plot(data.Time, data.yAccel)
 % ylabel('m/s^2')
@@ -28,4 +37,3 @@ plot(data.Time, headingVelocity);
 % plot(data.Time, data.zAccel)
 % xlabel('Time (ms)')
 % ylabel('m/s^2')
-% 
