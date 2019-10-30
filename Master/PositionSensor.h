@@ -126,7 +126,7 @@ void readEEPROMcal(Adafruit_BNO055 bno, bool force = false){
     *  This isn't foolproof, but it's better than nothing.
     */
     bno.getSensor(&sensor); // calibration data was not found
-    if (bnoID != sensor.sensor_id){
+    if (bnoID != sensor.sensor_id || force == true){
         Serial.println("\nNo Calibration Data for this sensor exists in EEPROM");
         delay(500);
     }
@@ -164,6 +164,7 @@ void readEEPROMcal(Adafruit_BNO055 bno, bool force = false){
     }
     else{
         Serial.println("Please Calibrate Sensor: ");
+        delay(2000);
         //while (!bno.isFullyCalibrated())
         while(digitalRead(buttonPin)==HIGH)
         {
@@ -207,6 +208,7 @@ void readEEPROMcal(Adafruit_BNO055 bno, bool force = false){
     Serial.println("Data stored to EEPROM.");
 
     Serial.println("\n--------------------------------\n");
+    logSensorOffsets(newCalib);
     delay(500);
 }
 
