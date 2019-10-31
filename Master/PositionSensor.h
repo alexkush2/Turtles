@@ -86,7 +86,7 @@ void displayCalStatus(Adafruit_BNO055 bno){
   Serial.print(mag, DEC);
 }
 
-// prints sensor cailbration ofsets to the serial monitor
+// prints sensor calibration ofsets to the serial monitor
 void displaySensorOffsets(const adafruit_bno055_offsets_t &calibData){
     Serial.print("Accelerometer: ");
     Serial.print(calibData.accel_offset_x); Serial.print(" ");
@@ -126,7 +126,7 @@ void readEEPROMcal(Adafruit_BNO055 bno, bool force = false){
     *  This isn't foolproof, but it's better than nothing.
     */
     bno.getSensor(&sensor); // calibration data was not found
-    if (bnoID != sensor.sensor_id){
+    if (bnoID != sensor.sensor_id || force == true){
         Serial.println("\nNo Calibration Data for this sensor exists in EEPROM");
         delay(500);
     }
@@ -158,13 +158,13 @@ void readEEPROMcal(Adafruit_BNO055 bno, bool force = false){
           // flash LEDS while magnetometer needs cal
           digitalWrite(GCalPin, status); digitalWrite(ACalPin, status); digitalWrite(MCalPin, status);
           status = !status;
-          Serial.print(status);
           bno.getEvent(&event);
           delay(BNO055_SAMPLERATE_DELAY_MS);
         }
     }
     else{
         Serial.println("Please Calibrate Sensor: ");
+        delay(2000);
         //while (!bno.isFullyCalibrated())
         while(digitalRead(buttonPin)==HIGH)
         {
@@ -208,6 +208,7 @@ void readEEPROMcal(Adafruit_BNO055 bno, bool force = false){
     Serial.println("Data stored to EEPROM.");
 
     Serial.println("\n--------------------------------\n");
+    logSensorOffsets(newCalib);
     delay(500);
 }
 
@@ -230,9 +231,11 @@ void updateCalStatusLEDS(Adafruit_BNO055 bno){
     digitalWrite(GCalPin, HIGH);
   } else digitalWrite(GCalPin, LOW);
   if(mag==3){
+    // turn on magnetometer cal LED
     digitalWrite(MCalPin, HIGH);
   } else digitalWrite(MCalPin, LOW);
   if (accel==3){
+    // turn on Accelerometer Cal LED
     digitalWrite(ACalPin, HIGH);
   } else digitalWrite(ACalPin, LOW);
 }
