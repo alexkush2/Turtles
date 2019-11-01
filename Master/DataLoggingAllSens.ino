@@ -114,32 +114,32 @@ void setup() {
 
 void loop() {
 
-  //   /* Get a new depthSensor event */
-  // sensors_event_t event;
-  // bno.getEvent(&event);
+    /* Get a new depthSensor event */
+  sensors_event_t event;
+  bno.getEvent(&event);
 
-  // /* Display the floating point data */
-  // Serial.print("X: ");
-  // Serial.print(event.orientation.x, 4);
-  // Serial.print("\tY: ");
-  // Serial.print(event.orientation.y, 4);
-  // Serial.print("\tZ: ");
-  // Serial.print(event.orientation.z, 4);
-  // Serial.print("\tDepth: ");
-  // Serial.print(depthSensor.depth());
+  /* Display the floating point data */
+  Serial.print("X: ");
+  Serial.print(event.orientation.x, 4);
+  Serial.print("\tY: ");
+  Serial.print(event.orientation.y, 4);
+  Serial.print("\tZ: ");
+  Serial.print(event.orientation.z, 4);
+  Serial.print("\tDepth: ");
+  Serial.print(depthSensor.depth());
 
   // /* Optional: Display calibration status */
-  // displayCalStatus(bno);
+  displayCalStatus(bno);
 
   // /* Optional: Display depthSensor status (debug only) */
   // //displaySensorStatus();
 
   // /* New line for the next sample */
-  // Serial.println("");
+  Serial.println("");
   
   writeCSV(bno, depthSensor);
   
   /* Wait the specified delay before requesting nex data */
-  //delay(BNO055_SAMPLERATE_DELAY_MS);
+  delay(BNO055_SAMPLERATE_DELAY_MS);
 
 }
