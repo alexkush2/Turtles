@@ -1,5 +1,5 @@
 #include "SDLogging.h"
-// #include "DepthSensor.h"
+//#include "DepthSensor.h"
 #include "PositionSensor.h"
 #include "ServoControler.h"
 
@@ -29,20 +29,27 @@ byte buttonPin = 41;
 // S + -
 byte tServoPin = 6;
 byte bServoPin = 5;
-byte lServoPin = 4;
-byte rServoPin = 3;
+byte lServoPin = 3;
+byte rServoPin = 2;
+byte motorPin = 1;
 
-// // declare servos
-// Servo tServo;
-// Servo bServo;
-// Servo lServo;
-// Servo rServo;
+// control pins
+byte HorizContPin = 8;
+byte VertContPin = 9;
+byte ThrottleContPin = 10;
+
+// PID or regular proportional control
+bool PropMode = true;
 
 void setup() {
 
   //================================================================
   // pin setup
   pinMode(buttonPin, INPUT_PULLUP); // button normally high
+
+  pinMode(HorizContPin, INPUT);
+  pinMode(VertContPin, INPUT);
+  pinMode(ThrottleContPin, INPUT);
 
   pinMode(GCalPin, OUTPUT);
   pinMode(ACalPin, OUTPUT);
@@ -117,7 +124,7 @@ void setup() {
 
   //================================================================
   // read calibration data
-  //            readEEPROMcal(bno, forceCal);
+  //readEEPROMcal(bno, forceCal);                                     // reset when done with tinkering
   //wipeEEPROM();
 
 
@@ -131,7 +138,11 @@ void setup() {
 
   // sweep servos 
   Serial.println("\nSweeping Servos\n");
+  SetupServos();
   SweepServos();
+
+  // if proportional mode, disable PID
+  stopPID();
 
 }
 
@@ -151,16 +162,46 @@ void loop() {
   Serial.print("\tDepth: ");
   Serial.print(depthSensor.depth());
 
+
   // /* Optional: Display calibration status */
   displayCalStatus(bno);
 
   // /* Optional: Display depthSensor status (debug only) */
   // //displaySensorStatus();
 
+  int* pos;
+
+  if(!PropMode){
+    double Orient[] = {event.gyro.x, event.gyro.y, event.orientation.z};
+    pos = ServoPIDUpdate(Orient);
+  
+    if(!digitalRead(buttonPin)){
+      resetPID();
+      SetServos(90,90,90,90);
+      delay(500);
+    }
+
+    // print PID 
+    Serial.print("  Ki,x,y,z: ");
+    Serial.print(XPID.getIntegral());
+    Serial.print(", ");
+    Serial.print(YPID.getIntegral());
+    Serial.print(", ");
+    Serial.print(ZPID.getIntegral());
+  } else{ // proportional mode
+    pos = ServoPropControl();
+
+    if(!digitalRead(buttonPin)){
+      SetServos(90,90,90,90);
+      delay(500);
+    }
+  }
+  
+
   // /* New line for the next sample */
   Serial.println("");
   
-  writeCSV(bno, depthSensor);
+  writeCSV(bno, depthSensor, pos);
   
   /* Wait the specified delay before requesting nex data */
   delay(BNO055_SAMPLERATE_DELAY_MS);
