@@ -165,7 +165,7 @@ void readEEPROMcal(Adafruit_BNO055 bno, bool force = false){
     else{
         Serial.println("Please Calibrate Sensor: ");
         delay(2000);
-        //while (!bno.isFullyCalibrated())
+        //while (!bno.isFullyCalibrated())  
         while(digitalRead(buttonPin)==HIGH)
         {
             bno.getEvent(&event);
