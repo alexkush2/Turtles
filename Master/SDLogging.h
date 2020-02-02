@@ -4,6 +4,14 @@
 #include <Adafruit_BNO055.h>
 #include <utility/imumaths.h>
 #include "MS5837.h"
+#include <AutoPID.h>
+
+extern AutoPID ZPID;
+extern AutoPID XPID;
+extern AutoPID YPID;
+
+extern byte HorizContPin;
+extern byte VertContPin;
 
 extern bool depthPresent;
 extern bool SDPresent;
@@ -14,7 +22,7 @@ extern bool SDPresent;
 // name of file to save data in
 #define FILE_NAME "accel.csv"
 
-void writeCSV(Adafruit_BNO055 bno, MS5837 depthSensor){
+void writeCSV(Adafruit_BNO055 bno, MS5837 depthSensor, int pos[]){
   // if no sd card break
   //if(!SDPresent) return;
 
@@ -67,6 +75,24 @@ void writeCSV(Adafruit_BNO055 bno, MS5837 depthSensor){
     dataFile.print(magCal);
     dataFile.print(", ");
     dataFile.print(depth);  // depth
+    dataFile.print(", ");
+    dataFile.print(XPID.getIntegral()); // PID integral coefficients
+    dataFile.print(", ");
+    dataFile.print(YPID.getIntegral());
+    dataFile.print(", ");
+    dataFile.print(ZPID.getIntegral());
+    dataFile.print(", ");
+    dataFile.print(analogRead(HorizContPin)); // analog pin readings
+    dataFile.print(", ");
+    dataFile.print(analogRead(VertContPin));
+    dataFile.print(", ");
+    dataFile.print(pos[0]); // servo positions
+    dataFile.print(", ");
+    dataFile.print(pos[1]);
+    dataFile.print(", ");
+    dataFile.print(pos[2]);
+    dataFile.print(", ");
+    dataFile.print(pos[3]);
     dataFile.println("");
     dataFile.close();
   }
@@ -97,7 +123,7 @@ void CSVinit(){
 
   // if the file is available, write to it:
   if (dataFile) {
-    dataFile.println("Time, xOrient, yOrient, zOrient, xGyro, yGyro, zGyro, xAccel, yAccel, zAccel, CalS, CalA, CalG, CalM, Depth");
+    dataFile.println("Time, xOrient, yOrient, zOrient, xGyro, yGyro, zGyro, xAccel, yAccel, zAccel, CalS, CalA, CalG, CalM, Depth, XPID Ki, YPID Ki, ZPID Ki, Horiz. Cont, Vert. Cont, top, bottom, left, right");
     dataFile.close();
   }
   // if the file isn't open, pop up an error:
