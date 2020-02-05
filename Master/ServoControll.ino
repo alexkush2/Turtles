@@ -124,7 +124,7 @@ void setup() {
 
   //================================================================
   // read calibration data
-  //readEEPROMcal(bno, forceCal);                                     // reset when done with tinkering
+  //readEEPROMcal(bno, forceCal);                                     // reset when done with tinkering to reenable calibrations
   //wipeEEPROM();
 
 
@@ -191,6 +191,7 @@ void loop() {
   } else{ // proportional mode
     pos = ServoPropControl();
 
+    // when button pressed set servos to straight back for 500ms
     if(!digitalRead(buttonPin)){
       SetServos(90,90,90,90);
       delay(500);
@@ -201,6 +202,7 @@ void loop() {
   // /* New line for the next sample */
   Serial.println("");
   
+  // log the shit to CSV
   writeCSV(bno, depthSensor, pos);
   
   /* Wait the specified delay before requesting nex data */

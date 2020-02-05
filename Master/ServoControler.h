@@ -116,9 +116,9 @@ void stopPID(){
 
 // proportional control of servos
 int* ServoPropControl(){
-    int top = 90+map(analogRead(HorizContPin),0,1023,minServoSwing,maxServoSwing); // im making this all up as i go
-    int bot = 90-map(analogRead(HorizContPin),0,1023,minServoSwing,maxServoSwing); // no idea, seriously probably all wrong
-    int left = 90+map(analogRead(VertContPin),0,1023,minServoSwing,maxServoSwing); // controls is really fucking hard
+    int top = 90+map(analogRead(HorizContPin),0,1023,minServoSwing,maxServoSwing); 
+    int bot = 90-map(analogRead(HorizContPin),0,1023,minServoSwing,maxServoSwing); 
+    int left = 90+map(analogRead(VertContPin),0,1023,minServoSwing,maxServoSwing); 
     int right = 90-map(analogRead(VertContPin),0,1023,minServoSwing,maxServoSwing);
     SetServos(top,bot,left,right);
     int pos[4] = {top,bot,left,right};
