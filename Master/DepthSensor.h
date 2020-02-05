@@ -63,7 +63,7 @@ bool initDepthSensor(MS5837 depthSensor){
     }
     
     depthSensor.setModel(MS5837::MS5837_30BA);
-    depthSensor.setFluidDensity(997); // kg/m^3 (freshwater, 1029 for seawater)
+    depthSensor.setFluidDensity(997); // kg/m^3 (997 freshwater, 1029 for seawater)
     return true;
 }
 

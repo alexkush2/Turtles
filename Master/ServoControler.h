@@ -1,34 +1,38 @@
 #include <Servo.h>
 #include <AutoPID.h>
 
+// max deflection from the 90 degree set point of fins
+#define maxServoSwing 30
+#define minServoSwing -30
+
+// define PID parameters
+float Kp = 1;
+float Ki = 1;
+float Kd = 0;
+
+// import pins servos are attached to 
 extern byte tServoPin;
 extern byte bServoPin;
 extern byte lServoPin;
 extern byte rServoPin;
 extern byte motorPin;
 
-#define maxServoSwing 30
-#define minServoSwing -30
-
-float Kp = 1;
-float Ki = 1;
-float Kd = 0;
-
 // declare servos
 Servo tServo;
 Servo bServo;
 Servo lServo;
 Servo rServo;
-
+// servo to control motor throttle
 Servo Throttle;
 
+// import pins attached to control inputs
 extern byte HorizContPin;
 extern byte VertContPin;
 extern byte ThrottleContPin;
 
-
+// define I/O and setpoint variables for PID
 static double in[3], out[3];
-double setPoint[] = {0,0,0};
+double setPoint[] = {0,0,0}; // expected values for PID
 
 AutoPID XPID(&in[0], &setPoint[0], &out[0], minServoSwing, maxServoSwing, Kp,Ki,Kd);
 AutoPID YPID(&in[1], &setPoint[1], &out[1], minServoSwing, maxServoSwing, Kp,Ki,Kd);
@@ -43,7 +47,7 @@ void SetupServos(){
     Throttle.attach(motorPin);
 }
 
-// manualy set servos
+// manually set servos
 void SetServos(int t=90, int b=90,int l=90,int r=90){
     // set servos to 0 position
     tServo.write(t);
@@ -100,7 +104,7 @@ int* ServoPIDUpdate(double input[3]){
     return SetServosPID(out);
 }
 
-// reset currently calcluated PID parameters
+// reset currently calculated PID parameters
 void resetPID(){
     XPID.reset();
     YPID.reset();
@@ -116,11 +120,13 @@ void stopPID(){
 
 // proportional control of servos
 int* ServoPropControl(){
+    // read inputs and map to range of min/max swings, then set servos
     int top = 90+map(analogRead(HorizContPin),0,1023,minServoSwing,maxServoSwing); 
     int bot = 90-map(analogRead(HorizContPin),0,1023,minServoSwing,maxServoSwing); 
     int left = 90+map(analogRead(VertContPin),0,1023,minServoSwing,maxServoSwing); 
     int right = 90-map(analogRead(VertContPin),0,1023,minServoSwing,maxServoSwing);
     SetServos(top,bot,left,right);
+    // return the position values of all the servos for data logging
     int pos[4] = {top,bot,left,right};
     return pos;
 }
