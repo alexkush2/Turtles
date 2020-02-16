@@ -8,7 +8,7 @@
 //#include <Servo.h>
 
 // pin that enables SD card (4 for ethernet shield)
-const int chipSelect = 4;
+const int chipSelect = SDCARD_SS_PIN;
 bool SDPresent = false;
 
 // Check I2C device address and correct line below (by default address is 0x29 or 0x28)
@@ -68,7 +68,7 @@ void setup() {
   bool forceCal = false;
   if(!digitalRead(buttonPin)){
     forceCal = true;
-    wipeEEPROM();
+    // wipeEEPROM();
     Serial.println("\n___________Erasing Calibration Data_____________\n");
     while (!digitalRead(buttonPin)){
       delay(500);

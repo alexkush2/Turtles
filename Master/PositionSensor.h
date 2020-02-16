@@ -1,7 +1,7 @@
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BNO055.h>
 #include <utility/imumaths.h>
-#include <EEPROM.h>
+// #include <EEPROM.h>
 
 
 /* Set the delay between fresh samples */
@@ -110,112 +110,112 @@ void displaySensorOffsets(const adafruit_bno055_offsets_t &calibData){
     Serial.print(calibData.mag_radius);
 }
 
-// read cal data from eeprom, force == true to make system recalibrate
-void readEEPROMcal(Adafruit_BNO055 bno, bool force = false){
-  int eeAddress = 0;
-  long bnoID;
-  bool foundCalib = false;
-  // read from eeprom to look for id
-  EEPROM.get(eeAddress, bnoID);
+// // read cal data from eeprom, force == true to make system recalibrate
+// void readEEPROMcal(Adafruit_BNO055 bno, bool force = false){
+//   int eeAddress = 0;
+//   long bnoID;
+//   bool foundCalib = false;
+//   // read from eeprom to look for id
+//   EEPROM.get(eeAddress, bnoID);
 
-  adafruit_bno055_offsets_t calibrationData;
-  sensor_t sensor;
+//   adafruit_bno055_offsets_t calibrationData;
+//   sensor_t sensor;
   
-    /*
-    *  Look for the sensor's unique ID at the beginning oF EEPROM.
-    *  This isn't foolproof, but it's better than nothing.
-    */
-    bno.getSensor(&sensor); // calibration data was not found
-    if (bnoID != sensor.sensor_id || force == true){
-        Serial.println("\nNo Calibration Data for this sensor exists in EEPROM");
-        delay(500);
-    }
-    else{ // calibration data was found in eeprom
-        Serial.println("\nFound Calibration for this sensor in EEPROM.");
-        eeAddress += sizeof(long);
-        EEPROM.get(eeAddress, calibrationData);
+//     /*
+//     *  Look for the sensor's unique ID at the beginning oF EEPROM.
+//     *  This isn't foolproof, but it's better than nothing.
+//     */
+//     bno.getSensor(&sensor); // calibration data was not found
+//     if (bnoID != sensor.sensor_id || force == true){
+//         Serial.println("\nNo Calibration Data for this sensor exists in EEPROM");
+//         delay(500);
+//     }
+//     else{ // calibration data was found in eeprom
+//         Serial.println("\nFound Calibration for this sensor in EEPROM.");
+//         eeAddress += sizeof(long);
+//         EEPROM.get(eeAddress, calibrationData);
 
-        displaySensorOffsets(calibrationData);
+//         displaySensorOffsets(calibrationData);
 
-        Serial.println("\n\nRestoring Calibration data to the BNO055...");
-        bno.setSensorOffsets(calibrationData);
+//         Serial.println("\n\nRestoring Calibration data to the BNO055...");
+//         bno.setSensorOffsets(calibrationData);
 
-        Serial.println("\n\nCalibration data loaded into BNO055");
-        foundCalib = true;
+//         Serial.println("\n\nCalibration data loaded into BNO055");
+//         foundCalib = true;
 
-        // if force flag was set in arguments force the system to update cal
-        if (force == true){
-          foundCalib == false;
-        }
-    }
-    sensors_event_t event;
-    bno.getEvent(&event);
-    /* always recal the mag as It goes out of calibration very often */
-    if (foundCalib && force == false){
-        Serial.println("Move sensor slightly to calibrate magnetometers");
-        bool status = 0;
-        while (!bno.isFullyCalibrated()) {
-          // flash LEDS while magnetometer needs cal
-          digitalWrite(GCalPin, status); digitalWrite(ACalPin, status); digitalWrite(MCalPin, status);
-          status = !status;
-          bno.getEvent(&event);
-          delay(BNO055_SAMPLERATE_DELAY_MS);
-        }
-    }
-    else{
-        Serial.println("Please Calibrate Sensor: ");
-        delay(2000);
-        //while (!bno.isFullyCalibrated())  
-        while(digitalRead(buttonPin)==HIGH)
-        {
-            bno.getEvent(&event);
+//         // if force flag was set in arguments force the system to update cal
+//         if (force == true){
+//           foundCalib == false;
+//         }
+//     }
+//     sensors_event_t event;
+//     bno.getEvent(&event);
+//     /* always recal the mag as It goes out of calibration very often */
+//     if (foundCalib && force == false){
+//         Serial.println("Move sensor slightly to calibrate magnetometers");
+//         bool status = 0;
+//         while (!bno.isFullyCalibrated()) {
+//           // flash LEDS while magnetometer needs cal
+//           digitalWrite(GCalPin, status); digitalWrite(ACalPin, status); digitalWrite(MCalPin, status);
+//           status = !status;
+//           bno.getEvent(&event);
+//           delay(BNO055_SAMPLERATE_DELAY_MS);
+//         }
+//     }
+//     else{
+//         Serial.println("Please Calibrate Sensor: ");
+//         delay(2000);
+//         //while (!bno.isFullyCalibrated())  
+//         while(digitalRead(buttonPin)==HIGH)
+//         {
+//             bno.getEvent(&event);
 
-            Serial.print("X: ");
-            Serial.print(event.orientation.x, 4);
-            Serial.print("\tY: ");
-            Serial.print(event.orientation.y, 4);
-            Serial.print("\tZ: ");
-            Serial.print(event.orientation.z, 4);
+//             Serial.print("X: ");
+//             Serial.print(event.orientation.x, 4);
+//             Serial.print("\tY: ");
+//             Serial.print(event.orientation.y, 4);
+//             Serial.print("\tZ: ");
+//             Serial.print(event.orientation.z, 4);
 
-            /* Optional: Display calibration status */
-            displayCalStatus(bno);
+//             /* Optional: Display calibration status */
+//             displayCalStatus(bno);
 
-            /* New line for the next sample */
-            Serial.println("");
+//             /* New line for the next sample */
+//             Serial.println("");
 
-            /* Wait the specified delay before requesting new data */
-            delay(BNO055_SAMPLERATE_DELAY_MS);
-        }
-    }
+//             /* Wait the specified delay before requesting new data */
+//             delay(BNO055_SAMPLERATE_DELAY_MS);
+//         }
+//     }
 
-    Serial.println("\nFully calibrated!");
-    Serial.println("--------------------------------");
-    Serial.println("Calibration Results: ");
-    adafruit_bno055_offsets_t newCalib;
-    bno.getSensorOffsets(newCalib);
-    displaySensorOffsets(newCalib);
+//     Serial.println("\nFully calibrated!");
+//     Serial.println("--------------------------------");
+//     Serial.println("Calibration Results: ");
+//     adafruit_bno055_offsets_t newCalib;
+//     bno.getSensorOffsets(newCalib);
+//     displaySensorOffsets(newCalib);
 
-    Serial.println("\n\nStoring calibration data to EEPROM...");
+//     Serial.println("\n\nStoring calibration data to EEPROM...");
 
-    eeAddress = 0;
-    bno.getSensor(&sensor);
-    bnoID = sensor.sensor_id;
+//     eeAddress = 0;
+//     bno.getSensor(&sensor);
+//     bnoID = sensor.sensor_id;
 
-    EEPROM.put(eeAddress, bnoID);
+//     EEPROM.put(eeAddress, bnoID);
 
-    eeAddress += sizeof(long);
-    EEPROM.put(eeAddress, newCalib);
-    Serial.println("Data stored to EEPROM.");
+//     eeAddress += sizeof(long);
+//     EEPROM.put(eeAddress, newCalib);
+//     Serial.println("Data stored to EEPROM.");
 
-    Serial.println("\n--------------------------------\n");
-    logSensorOffsets(newCalib);
-    delay(500);
-}
+//     Serial.println("\n--------------------------------\n");
+//     logSensorOffsets(newCalib);
+//     delay(500);
+// }
 
-void wipeEEPROM(){
-  EEPROM.put(0, long(0));
-  Serial.println("EEPROM Cal Erased");
-}
+// void wipeEEPROM(){
+//   EEPROM.put(0, long(0));
+//   Serial.println("EEPROM Cal Erased");
+// }
 
 void updateCalStatusLEDS(Adafruit_BNO055 bno){
   /* Get the four calibration values (0..3) */
