@@ -5,7 +5,7 @@
 #include "PositionSensor.h"
 #include "ServoControler.h"
 
-//#include <Servo.h>
+#include <Adafruit_NeoPixel.h>
 
 // pin that enables SD card (4 for ethernet shield)
 const int chipSelect = SDCARD_SS_PIN;
@@ -20,25 +20,33 @@ MS5837 depthSensor;
 bool depthPresent;
 
 // pin declarations
-byte GCalPin = 43;
-byte ACalPin = 45;
-byte MCalPin = 47;
-byte buttonPin = 41;
+byte LEDpin = 88;
+Adafruit_NeoPixel strip(1, LEDpin, NEO_GRB + NEO_KHZ800);
+
+byte buttonPin = A11;
+
+byte sw1pin = 49;
+byte sw2pin = 47;
+byte sw3pin = 45;
+byte sw4pin = 43;
+
+int ContGreenLED = A7;
+int ContYellowLED = A6;
 
 // Servo pinout
 // O_R_B
 // | | |
 // S + -
-byte tServoPin = 6;
-byte bServoPin = 5;
-byte lServoPin = 3;
-byte rServoPin = 2;
-byte motorPin = 1;
+byte tServoPin = 27;
+byte bServoPin = 29;
+byte lServoPin = 31;
+byte rServoPin = 33;
+byte motorPin = 35;
 
 // control pins
-byte HorizContPin = 8;
-byte VertContPin = 9;
-byte ThrottleContPin = 10;
+byte HorizContPin = A12;
+byte VertContPin = A9;
+byte ThrottleContPin = A10;
 
 // PID or regular proportional control
 bool PropMode = true;
@@ -47,22 +55,24 @@ void setup() {
 
   //================================================================
   // pin setup
-  pinMode(buttonPin, INPUT_PULLUP); // button normally high
+  pinMode(buttonPin, INPUT_PULLUP); // button, switches normally high
+  pinMode(sw1pin, INPUT_PULLUP); 
+  pinMode(sw2pin, INPUT_PULLUP); 
+  pinMode(sw3pin, INPUT_PULLUP); 
+  pinMode(sw4pin, INPUT_PULLUP); 
 
   pinMode(HorizContPin, INPUT);
   pinMode(VertContPin, INPUT);
   pinMode(ThrottleContPin, INPUT);
 
-  pinMode(GCalPin, OUTPUT);
-  pinMode(ACalPin, OUTPUT);
-  pinMode(MCalPin, OUTPUT);
-  digitalWrite(GCalPin, HIGH);
-  digitalWrite(ACalPin, HIGH);
-  digitalWrite(MCalPin, HIGH);
-  delay(500);
-  digitalWrite(GCalPin, LOW);
-  digitalWrite(ACalPin, LOW);
-  digitalWrite(MCalPin, LOW);
+  pinMode(ContGreenLED, OUTPUT);
+  pinMode(ContYellowLED, OUTPUT);
+
+  strip.begin();
+  strip.setPixelColor(0, 0, 255, 0);
+  strip.show(); // Initialize Pixel to green
+
+  analogWrite(ContGreenLED, HIGH);
 
   // check to see if recalibration is needed, if button is pressed
   bool forceCal = false;
@@ -88,14 +98,20 @@ void setup() {
     Serial.println("Card failed, or not present\nPress button to skip");
     // don't do anything more:
     while(1){ // error flash
-      digitalWrite(MCalPin, LOW);
+      digitalWrite(ContGreenLED, LOW);
+      digitalWrite(ContYellowLED, LOW);
+      strip.setPixelColor(0, 255, 0, 0);
+      strip.show(); // set pixel red
       delay(100);
-      digitalWrite(MCalPin, HIGH);
+      digitalWrite(ContYellowLED, HIGH);
+      strip.setPixelColor(0, 0, 255, 0);
+      strip.show(); // set pixel green
       delay(100);
       if(!digitalRead(buttonPin)){
         SDPresent == false;
         break;
       } 
+    analogWrite(ContGreenLED,HIGH);
     }
   } else SDPresent == true;
   
@@ -106,15 +122,21 @@ void setup() {
   // Initialise Sensors
 
   Serial.println("Orientation Sensor Test"); Serial.println("");
-
+  
   /* Initialise the orientation sensor */
   if(!bno.begin()) {
     /* There was a problem detecting the BNO055 ... check your connections */
     Serial.print("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
     while(1){ // error flash
-      digitalWrite(ACalPin, LOW);
+      digitalWrite(ContGreenLED,LOW);
+      digitalWrite(ContYellowLED, LOW);
+      strip.setPixelColor(0, 255, 0, 0);
+      strip.show(); // set pixel red
       delay(100);
-      digitalWrite(ACalPin, HIGH);
+      strip.setPixelColor(0, 200, 50, 200);
+      digitalWrite(ContGreenLED, HIGH);
+      digitalWrite(ContYellowLED, HIGH);
+      strip.show(); // set pixel purple
       delay(100);
     }
   }
@@ -128,7 +150,6 @@ void setup() {
   // read calibration data
   //readEEPROMcal(bno, forceCal);                                     // reset when done with tinkering to reenable calibrations
   //wipeEEPROM();
-
 
   /* Display some basic information on this orientation sensor */
   displaySensorDetails(bno);
@@ -145,7 +166,6 @@ void setup() {
 
   // if proportional mode, disable PID
   stopPID();
-
 }
 
 void loop() {

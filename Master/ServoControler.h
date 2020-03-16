@@ -44,7 +44,7 @@ void SetupServos(){
     bServo.attach(bServoPin);
     lServo.attach(lServoPin);
     rServo.attach(rServoPin);
-    Throttle.attach(motorPin);
+    Throttle.attach(motorPin,1000,2000);
 }
 
 // manually set servos
@@ -126,6 +126,9 @@ int* ServoPropControl(){
     int left = 90+map(analogRead(VertContPin),0,1023,minServoSwing,maxServoSwing); 
     int right = 90-map(analogRead(VertContPin),0,1023,minServoSwing,maxServoSwing);
     SetServos(top,bot,left,right);
+
+    int throt = map(analogRead(ThrottleContPin),0,1023,180,0);
+    Throttle.write(throt);
     // return the position values of all the servos for data logging
     int pos[4] = {top,bot,left,right};
     return pos;

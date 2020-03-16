@@ -1,10 +1,9 @@
 #include <Wire.h>
 #include "MS5837.h"
+#include <Adafruit_NeoPixel.h>
 
 // load external pins
-extern byte GCalPin;
-extern byte ACalPin;
-extern byte MCalPin;
+extern Adafruit_NeoPixel strip;
 extern byte buttonPin;
 
 /* Dont forget to add
@@ -17,29 +16,14 @@ in global declarations to initialize the sensor object
 
 // flash GCalPin 100ms at a time as an error
 void errDepthDelay1sec(){
-    digitalWrite(GCalPin, HIGH);
-    delay(100);
-    digitalWrite(GCalPin, LOW);
-    delay(100);
-    digitalWrite(GCalPin, HIGH);
-    delay(100);
-    digitalWrite(GCalPin, LOW);
-    delay(100);
-    digitalWrite(GCalPin, HIGH);
-    delay(100);
-    digitalWrite(GCalPin, LOW);
-    delay(100);
-    digitalWrite(GCalPin, HIGH);
-    delay(100);
-    digitalWrite(GCalPin, LOW);
-    delay(100);
-    digitalWrite(GCalPin, HIGH);
-    delay(100);
-    digitalWrite(GCalPin, LOW);
-    delay(100);
-    digitalWrite(GCalPin, HIGH);
-    delay(100);
-    digitalWrite(GCalPin, LOW); 
+    for(int i; i<5; i++){
+        delay(100);
+        strip.setPixelColor(0, 0, 0, 255);
+        strip.show(); // set pixel blue
+        delay(100);
+        strip.setPixelColor(0, 255, 0, 0);
+        strip.show(); // set pixel red 
+    }
 }
 
 // connects to sensor and sets up basic parameters
