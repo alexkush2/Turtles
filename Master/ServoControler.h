@@ -40,37 +40,37 @@ AutoPID ZPID(&in[2], &setPoint[2], &out[2], minServoSwing, maxServoSwing, Kp,Ki,
 
 // initialize servo objects
 void SetupServos(){
-    tServo.attach(tServoPin);
-    bServo.attach(bServoPin);
-    lServo.attach(lServoPin);
-    rServo.attach(rServoPin);
-    Throttle.attach(motorPin,1000,2000);
+	tServo.attach(tServoPin);
+	bServo.attach(bServoPin);
+	lServo.attach(lServoPin);
+	rServo.attach(rServoPin);
+	Throttle.attach(motorPin,1000,2000);
 }
 
 // manually set servos
 void SetServos(int t=90, int b=90,int l=90,int r=90){
-    // set servos to 0 position
-    tServo.write(t);
-    bServo.write(b);
-    lServo.write(l);
-    rServo.write(r);
+	// set servos to 0 position
+	tServo.write(t);
+	bServo.write(b);
+	lServo.write(l);
+	rServo.write(r);
 }
 
 void SweepServos(){
-    // set servos to 0 position
-    SetServos(90-minServoSwing, 90-minServoSwing, 90-minServoSwing, 90-minServoSwing);
-    delay(50);
+	// set servos to 0 position
+	SetServos(90-minServoSwing, 90-minServoSwing, 90-minServoSwing, 90-minServoSwing);
+	delay(50);
 
-    // sweep to 180 degrees
-    int i=90-minServoSwing;
-    while(i<=maxServoSwing){
-        SetServos(i,i,i,i);
-        i++;
-        delay(10);
-    }
-    //  return servos to rest
-    delay(50);
-    SetServos(90,90,90,90);
+	// sweep to 180 degrees
+	int i=90-minServoSwing;
+	while(i<=maxServoSwing){
+		SetServos(i,i,i,i);
+		i++;
+		delay(10);
+	}
+	//  return servos to rest
+	delay(50);
+	SetServos(90,90,90,90);
 }
 
 
@@ -84,52 +84,52 @@ void SweepServos(){
 
 // write Servo updates from PID calculations
 int* SetServosPID(double out[]){
-    int top = 90-int(out[2])+int(out[1]); // im making this all up as i go
-    int bot = 90+int(out[2])+int(out[1]); // no idea, seriously probably all wrong
-    int left = 90 + int(out[0]); // controls is really fucking hard
-    int right = 90-int(out[0]);
-    SetServos(top,bot,left,right);
-    int pos[4] = {top,bot,left,right};
-    return pos;
+	int top = 90-int(out[2])+int(out[1]); // im making this all up as i go
+	int bot = 90+int(out[2])+int(out[1]); // no idea, seriously probably all wrong
+	int left = 90 + int(out[0]); // controls is really fucking hard
+	int right = 90-int(out[0]);
+	SetServos(top,bot,left,right);
+	int pos[4] = {top,bot,left,right};
+	return pos;
 }
 
 // run PID calculations
 int* ServoPIDUpdate(double input[3]){    
-    in[0] = input[0] + map(analogRead(HorizContPin),0,1023,minServoSwing,maxServoSwing); // x
-    in[1] = input[1] + map(analogRead(VertContPin),0,1023,minServoSwing,maxServoSwing); // y
-    in[2] = input[2]; // z
-    XPID.run();
-    YPID.run();
-    ZPID.run();
-    return SetServosPID(out);
+	in[0] = input[0] + map(analogRead(HorizContPin),0,1023,minServoSwing,maxServoSwing); // x
+	in[1] = input[1] + map(analogRead(VertContPin),0,1023,minServoSwing,maxServoSwing); // y
+	in[2] = input[2]; // z
+	XPID.run();
+	YPID.run();
+	ZPID.run();
+	return SetServosPID(out);
 }
 
 // reset currently calculated PID parameters
 void resetPID(){
-    XPID.reset();
-    YPID.reset();
-    ZPID.reset();
+	XPID.reset();
+	YPID.reset();
+	ZPID.reset();
 }
 
 // stop PID controllers
 void stopPID(){
-    XPID.stop();
-    YPID.stop();
-    ZPID.stop();
+	XPID.stop();
+	YPID.stop();
+	ZPID.stop();
 }
 
 // proportional control of servos
 int* ServoPropControl(){
-    // read inputs and map to range of min/max swings, then set servos
-    int top = 90+map(analogRead(HorizContPin),0,1023,minServoSwing,maxServoSwing); 
-    int bot = 90-map(analogRead(HorizContPin),0,1023,minServoSwing,maxServoSwing); 
-    int left = 90+map(analogRead(VertContPin),0,1023,minServoSwing,maxServoSwing); 
-    int right = 90-map(analogRead(VertContPin),0,1023,minServoSwing,maxServoSwing);
-    SetServos(top,bot,left,right);
+	// read inputs and map to range of min/max swings, then set servos
+	int top = 90+map(analogRead(HorizContPin),0,1023,minServoSwing,maxServoSwing); 
+	int bot = 90-map(analogRead(HorizContPin),0,1023,minServoSwing,maxServoSwing); 
+	int left = 90+map(analogRead(VertContPin),0,1023,minServoSwing,maxServoSwing); 
+	int right = 90-map(analogRead(VertContPin),0,1023,minServoSwing,maxServoSwing);
+	SetServos(top,bot,left,right);
 
-    int throt = map(analogRead(ThrottleContPin),0,1023,180,0);
-    Throttle.write(throt);
-    // return the position values of all the servos for data logging
-    int pos[4] = {top,bot,left,right};
-    return pos;
+	int throt = map(analogRead(ThrottleContPin),0,1023,180,0);
+	Throttle.write(throt);
+	// return the position values of all the servos for data logging
+	int pos[4] = {top,bot,left,right};
+	return pos;
 }
