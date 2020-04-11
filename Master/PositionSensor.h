@@ -25,7 +25,9 @@
 // extern byte GCalPin;
 // extern byte ACalPin;
 // extern byte MCalPin;
-extern byte buttonPin;
+// extern byte buttonPin;
+#define buttonPin A11
+
 
 // displays sensor specs and shit to serial monitor
 void displaySensorDetails(Adafruit_BNO055 bno){

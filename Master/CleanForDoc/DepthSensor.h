@@ -5,9 +5,9 @@
 #define ContGreenLED A7 
 #define ContYellowLED A6
 
-// load external pins
+// load external pins and objects
 extern Adafruit_NeoPixel strip;
-// extern byte buttonPin;
+
 #define buttonPin A11
 
 /* Dont forget to add

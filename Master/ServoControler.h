@@ -26,9 +26,11 @@ Servo rServo;
 Servo Throttle;
 
 // import pins attached to control inputs
-extern byte HorizContPin;
-extern byte VertContPin;
-extern byte ThrottleContPin;
+#define HorizContPin A12
+#define VertContPin A9
+#define ThrottleContPin A10
+
+extern Adafruit_NeoPixel strip;
 
 // define I/O and setpoint variables for PID
 static double in[3], out[3];
@@ -132,4 +134,13 @@ int* ServoPropControl(){
 	// return the position values of all the servos for data logging
 	int pos[4] = {top,bot,left,right};
 	return pos;
+}
+
+void ServoPropLoop(){
+	strip.setPixelColor(0, 235, 52, 225);
+	strip.show(); // Initialize Pixel to pink
+	while(1){
+		ServoPropControl();
+		delay(100);
+	}
 }

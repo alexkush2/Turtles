@@ -10,11 +10,16 @@ extern AutoPID ZPID;
 extern AutoPID XPID;
 extern AutoPID YPID;
 
-extern byte HorizContPin;
-extern byte VertContPin;
+// extern byte HorizContPin;
+// extern byte VertContPin;
 
 extern bool depthPresent;
 extern bool SDPresent;
+
+#define HorizContPin A12
+#define VertContPin A9
+#define ThrottleContPin A10
+
 //Dont Forget -----
 // pin that enables SD card (4 for ethernet shield)
 //const int chipSelect = 4;

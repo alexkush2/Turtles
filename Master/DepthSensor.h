@@ -2,9 +2,13 @@
 #include "MS5837.h"
 #include <Adafruit_NeoPixel.h>
 
+#define ContGreenLED A7 
+#define ContYellowLED A6
+
 // load external pins
 extern Adafruit_NeoPixel strip;
-extern byte buttonPin;
+// extern byte buttonPin;
+#define buttonPin A11
 
 /* Dont forget to add
 
@@ -20,9 +24,13 @@ void errDepthDelay1sec(){
         delay(100);
         strip.setPixelColor(0, 0, 0, 255);
         strip.show(); // set pixel blue
+        digitalWrite(ContGreenLED, HIGH);
+		digitalWrite(ContYellowLED, HIGH);
         delay(100);
         strip.setPixelColor(0, 255, 0, 0);
         strip.show(); // set pixel red 
+        digitalWrite(ContGreenLED, LOW);
+		digitalWrite(ContYellowLED, LOW);
     }
 }
 

@@ -1,5 +1,3 @@
-// fucked up and used autoPID instead of AutotunePID
-
 #include "SDLogging.h"
 //#include "DepthSensor.h"
 #include "PositionSensor.h"
@@ -23,15 +21,15 @@ bool depthPresent;
 byte LEDpin = 88;
 Adafruit_NeoPixel strip(1, LEDpin, NEO_GRB + NEO_KHZ800);
 
-byte buttonPin = A11;
+#define buttonPin A11
 
-byte sw1pin = 49;
-byte sw2pin = 47;
+byte sw1pin = 49;	// PID or proportional
+byte sw2pin = 47;	// ignore sensors
 byte sw3pin = 45;
 byte sw4pin = 43;
 
-int ContGreenLED = A7;
-int ContYellowLED = A6;
+#define ContGreenLED A7 
+#define ContYellowLED A6
 
 // Servo pinout
 // O_R_B
@@ -43,10 +41,11 @@ byte lServoPin = 31;
 byte rServoPin = 33;
 byte motorPin = 35;
 
+
 // control pins
-byte HorizContPin = A12;
-byte VertContPin = A9;
-byte ThrottleContPin = A10;
+#define HorizContPin A12
+#define VertContPin A9
+#define ThrottleContPin A10
 
 // PID or regular proportional control
 bool PropMode = true;
@@ -65,6 +64,7 @@ void setup() {
 	pinMode(VertContPin, INPUT);
 	pinMode(ThrottleContPin, INPUT);
 
+
 	pinMode(ContGreenLED, OUTPUT);
 	pinMode(ContYellowLED, OUTPUT);
 
@@ -72,7 +72,14 @@ void setup() {
 	strip.setPixelColor(0, 0, 255, 0);
 	strip.show(); // Initialize Pixel to green
 
-	analogWrite(ContGreenLED, HIGH);
+	digitalWrite(ContGreenLED, HIGH);
+
+	// if swich 2 is flipped only do proportional control
+	if(!digitalRead(sw2pin)){
+		SetupServos();
+		stopPID();
+		ServoPropLoop();
+	}
 
 	// check to see if recalibration is needed, if button is pressed
 	bool forceCal = false;
@@ -128,7 +135,7 @@ void setup() {
 		/* There was a problem detecting the BNO055 ... check your connections */
 		Serial.print("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
 		while(1){ // error flash
-			digitalWrite(ContGreenLED,LOW);
+			digitalWrite(ContGreenLED, LOW);
 			digitalWrite(ContYellowLED, LOW);
 			strip.setPixelColor(0, 255, 0, 0);
 			strip.show(); // set pixel red
@@ -165,12 +172,16 @@ void setup() {
 	SweepServos();
 
 	// if proportional mode, disable PID
-	stopPID();
+	//if(digitalRead(sw1pin)){
+		stopPID();
+	//}
+
+	digitalWrite(ContGreenLED,HIGH);
 }
 
 void loop() {
 
-		/* Get a new depthSensor event */
+	/* Get a new depthSensor event */
 	sensors_event_t event;
 	bno.getEvent(&event);
 
